@@ -3,6 +3,7 @@ import fitz
 import os
 import io
 import argparse
+import re
 from PIL import Image
 
 # Parse arguments from terminal
@@ -19,9 +20,16 @@ OUTPUT_IMAGES_DIR = args.output_dir
 IMAGE_FORMAT = args.img_format
 IMAGE_QUALITY = int(args.img_quality)
 
-# Removes all letters from a string
-def remove_letters(text):
-    return ''.join([c for c in text if not c.isalpha()])
+# Sanitizes a string to be used as a filename.
+def sanitize_for_filename(text):
+    if not text:
+        return ""
+    # Remove all non-alphanumeric characters from the text
+    text = re.sub(r'[^\w\s-]', '', text).strip()
+    # Replace spaces and repeated hyphens with a single hyphen
+    text = re.sub(r'[-\s]+', '-', text)
+    # Truncate to 50 characters
+    return text[:50]
 
 # Resizes an image so that its width or height does not exceed the specified maximum size.
 def resize_image(image):
@@ -107,7 +115,7 @@ with pdfplumber.open(PDF_PATH) as pdf:
 
         # Extracts and saves images.
         imagens = save_images_from_page(
-            document, index, remove_letters(texto))
+            document, index, sanitize_for_filename(texto))
         for img in imagens:
             print(f"Image Saved: {img}")
         print("=" * 50)
